@@ -1,0 +1,576 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+    color: white;
+    overflow: hidden;
+    height: 100vh;
+}
+
+#app {
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;
+    height: 100vh;
+    gap: 10px;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+header h1 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+header p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+#controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+#search-container {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    max-width: 350px;
+}
+
+#search-input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 14px;
+}
+
+#search-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#search-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+#search-btn:hover {
+    transform: scale(1.05);
+}
+
+#audio-upload {
+    display: flex;
+    align-items: center;
+}
+
+#audio-file {
+    display: none;
+}
+
+.upload-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    font-weight: normal;
+    transition: transform 0.2s;
+    text-align: center;
+    font-size: 14px;
+}
+
+.upload-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+#song-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+#album-cover {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+#song-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#song-title {
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+}
+
+#song-artist {
+    font-size: 14px;
+    opacity: 0.8;
+    color: #4ecdc4;
+}
+
+#song-duration {
+    font-size: 12px;
+    opacity: 0.6;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#main-content {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 20px;
+    height: 100%;
+    min-height: 0;
+}
+
+#player-section {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.player-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.player-container h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: #4ecdc4;
+    font-weight: bold;
+}
+
+#audio-player {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+#youtube-player {
+    width: 100%;
+    height: 200px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+#audio-info, #youtube-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#progress-bar, #youtube-progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+#progress-fill, #youtube-progress-fill {
+    height: 100%;
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+    width: 0%;
+    transition: width 0.1s ease;
+}
+
+/* Hide containers initially */
+#audio-player-container {
+    display: none;
+}
+
+#youtube-player-container {
+    display: none;
+}
+
+/* Show containers when active */
+#audio-player-container.active {
+    display: block;
+}
+
+#youtube-player-container.active {
+    display: block;
+}
+
+#visualization-section {
+    position: relative;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#main-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+}
+
+#lyrics-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.lyric-word {
+    position: absolute;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    transition: all 0.3s ease;
+    animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: scale(0.8); }
+    20% { opacity: 1; transform: scale(1.2); }
+    80% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.8); }
+}
+
+#user-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+#user-controls button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#user-controls button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#user-controls button.active {
+    background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+}
+
+#brush-size {
+    width: 100px;
+}
+
+#color-picker {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    #main-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+    }
+    
+    #controls {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    #song-info {
+        order: -1;
+    }
+}
+
+/* AI Controls Styles */
+#ai-controls {
+    display: flex;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+#auth-section {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-width: 300px;
+}
+
+#auth-token {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 14px;
+}
+
+#auth-token::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#set-token {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    background: linear-gradient(45deg, #45b7d1, #4ecdc4);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+#set-token:hover {
+    transform: scale(1.05);
+}
+
+#transcription-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+#toggle-transcription {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+#toggle-transcription:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#toggle-transcription.active {
+    background: linear-gradient(45deg, #ff6b6b, #fd79a8);
+}
+
+#language-select {
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 14px;
+}
+
+#language-select option {
+    background: #2a2a2a;
+    color: white;
+}
+
+#mood-analysis {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-width: 250px;
+}
+
+#current-mood {
+    font-size: 16px;
+    font-weight: bold;
+    color: #4ecdc4;
+}
+
+#mood-indicator {
+    color: #ff6b6b;
+    text-transform: capitalize;
+}
+
+.mood-happy { color: #ffeaa7; }
+.mood-sad { color: #74b9ff; }
+.mood-energetic { color: #fd79a8; }
+.mood-calm { color: #81ecec; }
+.mood-melancholic { color: #a29bfe; }
+.mood-uplifting { color: #00b894; }
+
+#transcription-output {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    padding: 10px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.transcription-line {
+    margin-bottom: 8px;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    border-left: 3px solid #4ecdc4;
+}
+
+.timestamp {
+    color: #96ceb4;
+    font-size: 12px;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+}
+
+#proxy-status {
+    margin-top: 8px;
+    padding: 5px 8px;
+    background: rgba(255, 165, 0, 0.2);
+    border-radius: 3px;
+    border-left: 3px solid #ffa500;
+}
+
+#proxy-status small {
+    color: #ffa500;
+    font-size: 12px;
+}
+
+#proxy-status code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Manual Song Info Styles */
+#manual-song-info {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+#manual-song-info h4 {
+    margin-bottom: 10px;
+    color: #4ecdc4;
+    font-size: 0.9rem;
+}
+
+#manual-inputs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+#manual-title, #manual-artist {
+    flex: 1;
+    min-width: 150px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 0.9rem;
+}
+
+#manual-title::placeholder, #manual-artist::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#fetch-lyrics, #clear-manual {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background: #4ecdc4;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+}
+
+#fetch-lyrics:hover {
+    background: #45b7d1;
+}
+
+#clear-manual {
+    background: #fd79a8;
+}
+
+#clear-manual:hover {
+    background: #ff6b6b;
+}
+
+#lyric-status {
+    font-size: 0.8rem;
+    padding: 5px 0;
+    min-height: 20px;
+}

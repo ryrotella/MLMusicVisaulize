@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TranscribeAudioLive - Music Visualization</title>
+    <meta http-equiv="Permissions-Policy" content="autoplay=*, encrypted-media=*, accelerometer=*, gyroscope=*, picture-in-picture=*, clipboard-write=*, web-share=*">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>TranscribeAudioLive</h1>
+            <p>Visual expression of music's interiority</p>
+        </header>
+
+        <div id="controls">
+            <div id="search-container">
+                <input type="text" id="search-input" placeholder="Search for a song or paste YouTube URL">
+                <button id="search-btn">Search</button>
+            </div>
+            <div id="audio-upload">
+                <input type="file" id="audio-file" accept="audio/*">
+                <label for="audio-file" class="upload-btn">Or Upload Audio</label>
+            </div>
+            <div id="song-info">
+                <img id="album-cover" alt="Album cover" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEFydDwvdGV4dD48L3N2Zz4=">
+                <div id="song-details">
+                    <div id="song-title">Select an audio file</div>
+                    <div id="song-artist">to begin visualization</div>
+                    <div id="song-duration">--:--</div>
+                </div>
+            </div>
+            <div id="manual-song-info">
+                <h4>Manual Song Info</h4>
+                <div id="manual-inputs">
+                    <input type="text" id="manual-title" placeholder="Song Title (e.g., Bohemian Rhapsody)">
+                    <input type="text" id="manual-artist" placeholder="Artist (e.g., Queen)">
+                    <button id="fetch-lyrics">Get Lyrics</button>
+                    <button id="clear-manual">Clear</button>
+                </div>
+                <div id="lyric-status"></div>
+            </div>
+        </div>
+
+        <div id="main-content">
+            <div id="player-section">
+                <div id="audio-player-container" class="player-container">
+                    <h3>Audio Player</h3>
+                    <audio id="audio-player" controls></audio>
+                    <div id="audio-info">
+                        <div id="current-time">0:00</div>
+                        <div id="progress-bar">
+                            <div id="progress-fill"></div>
+                        </div>
+                        <div id="total-time">0:00</div>
+                    </div>
+                </div>
+
+                <div id="youtube-player-container" class="player-container">
+                    <h3>YouTube Player</h3>
+                    <div id="youtube-player"></div>
+                    <div id="youtube-info">
+                        <div id="youtube-current-time">0:00</div>
+                        <div id="youtube-progress-bar">
+                            <div id="youtube-progress-fill"></div>
+                        </div>
+                        <div id="youtube-total-time">0:00</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="visualization-section">
+                <canvas id="main-canvas"></canvas>
+                <div id="lyrics-overlay"></div>
+            </div>
+        </div>
+
+        <div id="user-controls">
+            <button id="toggle-drawing">Enable Drawing</button>
+            <button id="clear-canvas">Clear Canvas</button>
+            <input type="range" id="brush-size" min="1" max="50" value="10">
+            <input type="color" id="color-picker" value="#ffffff">
+        </div>
+
+        <div id="ai-controls">
+            <div id="auth-section">
+                <input type="text" id="auth-token" placeholder="Enter Replicate Auth Token">
+                <button id="set-token">Set Token</button>
+            </div>
+            <div id="transcription-controls">
+                <button id="toggle-transcription">Start Transcription</button>
+                <button id="toggle-real-transcription">Advanced Processing</button>
+                <select id="language-select">
+                    <option value="auto">Auto Detect</option>
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="it">Italian</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="ru">Russian</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="zh">Chinese</option>
+                </select>
+                <label for="translate-checkbox">
+                    <input type="checkbox" id="translate-checkbox"> Translate to English
+                </label>
+                <div id="proxy-status">
+                    <small>For YouTube: Run <code>node youtube-proxy.js</code> first</small>
+                </div>
+            </div>
+            <div id="mood-analysis">
+                <div id="current-mood">Mood: <span id="mood-indicator">Neutral</span></div>
+                <div id="transcription-output"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
