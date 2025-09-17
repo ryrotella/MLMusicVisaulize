@@ -10,8 +10,7 @@
 <body>
     <div id="app">
         <header>
-            <h1>TranscribeAudioLive</h1>
-            <p>Visual expression of music's interiority</p>
+            <h1>A Symphony of Guesses</h1>
         </header>
 
         <div id="controls">
@@ -84,36 +83,12 @@
         </div>
 
         <div id="ai-controls">
-            <div id="auth-section">
-                <input type="text" id="auth-token" placeholder="Enter Replicate Auth Token">
-                <button id="set-token">Set Token</button>
-            </div>
-            <div id="transcription-controls">
-                <button id="toggle-transcription">Start Transcription</button>
-                <button id="toggle-real-transcription">Advanced Processing</button>
-                <select id="language-select">
-                    <option value="auto">Auto Detect</option>
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="it">Italian</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ru">Russian</option>
-                    <option value="ja">Japanese</option>
-                    <option value="ko">Korean</option>
-                    <option value="zh">Chinese</option>
-                </select>
-                <label for="translate-checkbox">
-                    <input type="checkbox" id="translate-checkbox"> Translate to English
-                </label>
-                <div id="proxy-status">
-                    <small>For YouTube: Run <code>node youtube-proxy.js</code> first</small>
-                </div>
-            </div>
             <div id="mood-analysis">
                 <div id="current-mood">Mood: <span id="mood-indicator">Neutral</span></div>
-                <div id="transcription-output"></div>
+                <div id="gpt-responses">
+                    <h4>AI Interpretation</h4>
+                    <div id="gpt-output"></div>
+                </div>
             </div>
         </div>
     </div>

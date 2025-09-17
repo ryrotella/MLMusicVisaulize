@@ -115,6 +115,7 @@ class TranscribeAudioLive {
         this.lyricDatabase = new LyricDatabase();
         this.currentLyricData = null;
         this.syncedLyricsInterval = null;
+        this.lastDisplayedLyric = null;
         
         this.loadYouTubeAPI();
         this.init();
@@ -183,8 +184,67 @@ class TranscribeAudioLive {
         if (event.data === YT.PlayerState.PLAYING) {
             this.startVisualization();
             this.updateYouTubeProgress();
+            
+            // Automatically fetch lyrics when video starts playing
+            this.autoFetchYouTubeLyrics();
         } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
             this.pauseVisualization();
+        }
+    }
+
+    async autoFetchYouTubeLyrics() {
+        if (!this.youtubePlayer || !this.youtubePlayer.getVideoData) return;
+        
+        try {
+            const videoData = this.youtubePlayer.getVideoData();
+            if (!videoData || !videoData.title) return;
+            
+            console.log('Auto-fetching lyrics for YouTube video:', videoData.title);
+            
+            // Parse title and artist from video title
+            const parsed = this.lyricDatabase.parseTitleArtist(videoData.title);
+            if (parsed && parsed.title && parsed.artist) {
+                console.log('Parsed from YouTube title:', parsed);
+                
+                // Update manual input fields
+                const titleInput = document.getElementById('manual-title');
+                const artistInput = document.getElementById('manual-artist');
+                if (titleInput && artistInput) {
+                    titleInput.value = parsed.title;
+                    artistInput.value = parsed.artist;
+                }
+                
+                // Fetch lyrics automatically
+                const lyricData = await this.lyricDatabase.searchLyrics(parsed.title, parsed.artist);
+                if (lyricData) {
+                    this.currentLyricData = lyricData;
+                    
+                    // Update status
+                    const statusDiv = document.getElementById('lyric-status');
+                    if (statusDiv) {
+                        statusDiv.textContent = `Found lyrics: ${parsed.title} by ${parsed.artist}`;
+                        statusDiv.style.color = '#4ecdc4';
+                    }
+                    
+                    // Start synced lyrics if available
+                    if (lyricData.syncedLyrics) {
+                        this.startSyncedLyrics();
+                    }
+                    
+                    // Analyze lyrics with GPT
+                    this.analyzeLyricsWithGPT(lyricData.plainLyrics, parsed.title, parsed.artist);
+                    
+                    console.log('Auto-fetched lyrics successfully');
+                } else {
+                    const statusDiv = document.getElementById('lyric-status');
+                    if (statusDiv) {
+                        statusDiv.textContent = `No lyrics found for: ${parsed.title} by ${parsed.artist}`;
+                        statusDiv.style.color = '#ff6b6b';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error auto-fetching YouTube lyrics:', error);
         }
     }
 
@@ -238,9 +298,6 @@ class TranscribeAudioLive {
         const audioFile = document.getElementById('audio-file');
         const toggleDrawing = document.getElementById('toggle-drawing');
         const clearCanvas = document.getElementById('clear-canvas');
-        const setTokenBtn = document.getElementById('set-token');
-        const toggleTranscription = document.getElementById('toggle-transcription');
-        const toggleRealTranscription = document.getElementById('toggle-real-transcription');
         const fetchLyrics = document.getElementById('fetch-lyrics');
         const clearManual = document.getElementById('clear-manual');
         const manualTitle = document.getElementById('manual-title');
@@ -254,9 +311,6 @@ class TranscribeAudioLive {
         audioFile.addEventListener('change', (e) => this.handleFileUpload(e));
         toggleDrawing.addEventListener('click', () => this.toggleDrawingMode());
         clearCanvas.addEventListener('click', () => this.clearCanvas());
-        setTokenBtn.addEventListener('click', () => this.handleSetToken());
-        toggleTranscription.addEventListener('click', () => this.toggleTranscription());
-        toggleRealTranscription.addEventListener('click', () => this.toggleRealTranscription());
         
         fetchLyrics.addEventListener('click', () => this.handleManualLyricSearch());
         clearManual.addEventListener('click', () => this.clearManualInputs());
@@ -648,7 +702,7 @@ class TranscribeAudioLive {
         });
     }
 
-    displayLyricWord(word, position) {
+    displayLyricWord(word, position, isSynced = false) {
         const lyricsOverlay = document.getElementById('lyrics-overlay');
         const wordElement = document.createElement('div');
         
@@ -656,7 +710,13 @@ class TranscribeAudioLive {
         wordElement.textContent = word;
         wordElement.style.left = position.x + 'px';
         wordElement.style.top = position.y + 'px';
-        wordElement.style.color = `hsl(${Math.random() * 360}, 70%, 70%)`;
+        wordElement.style.color = 'white'; // Make all lyrics white
+        
+        if (isSynced) {
+            wordElement.style.fontSize = '24px';
+            wordElement.style.fontWeight = 'bold';
+            wordElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+        }
         
         lyricsOverlay.appendChild(wordElement);
         
@@ -1834,6 +1894,59 @@ class TranscribeAudioLive {
         return null;
     }
 
+    async analyzeLyricsWithGPT(lyrics, title, artist) {
+        if (!this.authToken) {
+            console.warn('No auth token available for GPT analysis');
+            return;
+        }
+
+        const gptOutput = document.getElementById('gpt-output');
+        if (!gptOutput) return;
+
+        gptOutput.innerHTML = '<div style="color: #4ecdc4;">Analyzing lyrics...</div>';
+
+        const prompt = `Analyze these song lyrics and provide a creative interpretation of the song's meaning, mood, and emotional themes. Be poetic and insightful:
+
+Song: "${title}" by ${artist}
+
+Lyrics:
+${lyrics}
+
+Provide:
+1. Emotional mood/atmosphere
+2. Key themes and metaphors
+3. A creative interpretation of the song's deeper meaning
+
+Keep it concise but insightful (2-3 sentences per section).`;
+
+        const data = {
+            model: "openai/gpt-5",
+            input: {
+                prompt: prompt
+            }
+        };
+
+        try {
+            const response = await this.makeReplicateRequest(data);
+            console.log("GPT lyric analysis response:", response);
+
+            if (response && response.output) {
+                const analysis = response.output.join("").trim();
+                
+                if (analysis) {
+                    gptOutput.innerHTML = `
+                        <div style="color: white; line-height: 1.4; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-top: 10px;">
+                            ${analysis.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('GPT lyric analysis error:', error);
+            gptOutput.innerHTML = '<div style="color: #ff6b6b;">Analysis failed - try again later</div>';
+        }
+    }
+
     handleSetToken() {
         const tokenInput = document.getElementById('auth-token');
         const token = tokenInput.value.trim();
@@ -1977,6 +2090,11 @@ class TranscribeAudioLive {
                     this.startSyncedLyrics();
                 }
                 
+                // Analyze lyrics with GPT
+                if (lyricData.plainLyrics) {
+                    this.analyzeLyricsWithGPT(lyricData.plainLyrics, title, artist);
+                }
+                
             } else {
                 statusDiv.textContent = 'No lyrics found for this song';
                 statusDiv.style.color = '#fd79a8';
@@ -2081,11 +2199,35 @@ class TranscribeAudioLive {
     }
 
     displaySyncedLyricLine(text) {
+        // Prevent displaying the same lyric line repeatedly
+        if (this.lastDisplayedLyric === text) {
+            return;
+        }
+        
+        this.lastDisplayedLyric = text;
+        
+        // Clear previous synced lyrics from overlay
+        const lyricsOverlay = document.getElementById('lyrics-overlay');
+        const existingSynced = lyricsOverlay.querySelectorAll('.lyric-word.synced');
+        existingSynced.forEach(el => el.remove());
+        
         // Display current lyric line with special styling
-        this.displayLyricWord(text, {
-            x: this.canvas.width / 2 - 100,
-            y: this.canvas.height / 2
-        }, true);
+        const wordElement = document.createElement('div');
+        wordElement.className = 'lyric-word synced';
+        wordElement.textContent = text;
+        wordElement.style.position = 'absolute';
+        wordElement.style.left = '50%';
+        wordElement.style.top = '50%';
+        wordElement.style.transform = 'translate(-50%, -50%)';
+        wordElement.style.color = 'white';
+        wordElement.style.fontSize = '28px';
+        wordElement.style.fontWeight = 'bold';
+        wordElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+        wordElement.style.textAlign = 'center';
+        wordElement.style.maxWidth = '80%';
+        wordElement.style.zIndex = '1000';
+        
+        lyricsOverlay.appendChild(wordElement);
         
         // Also update transcription output
         this.handleTranscriptionResult(`[Synced] ${text}`);
@@ -2156,7 +2298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.transcribeApp = new TranscribeAudioLive();
     
     // Auto-set the provided auth token
-    const providedToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjUwMDZlMjc5MTVhMTcwYWIyNmIxZWUzYjgxZDExNjU0MmYxMjRmMjAiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUnlhbiBSb3RlbGxhIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0xuVkFENEMxUjdMMGNQM2JFVC14aVo4bUk0RWJ2aUZhQXFWazcxdUZQc01CMXJ6Zz1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9pdHAtaW1hLXJlcGxpY2F0ZS1wcm94eSIsImF1ZCI6Iml0cC1pbWEtcmVwbGljYXRlLXByb3h5IiwiYXV0aF90aW1lIjoxNzU4MDY3MTg3LCJ1c2VyX2lkIjoiUjg0UTJZS09GM2E1NVZlTzJSaUpxeGpqYnNvMiIsInN1YiI6IlI4NFEyWUtPRjNhNTVWZU8yUmlKcXhqamJzbzIiLCJpYXQiOjE3NTgwNjcxODcsImV4cCI6MTc1ODA3MDc4NywiZW1haWwiOiJybXI5NDk2QG55dS5lZHUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExMzkzNTg5NTcyMDUwNTgxNDI2NiJdLCJlbWFpbCI6WyJybXI5NDk2QG55dS5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.B9G64HjCHf6ZaUS4-R77h9mUD6GlfmBBF_57olruOZc8lSGQ_G0uZk6xbqD4UgKfy9yRp1Rj7DY9N5bL8UqI64Izqw8ur1WJdu9iqPBKrPq_g4XeTME-xTfTKnF9te8g_jRVQnjDiB2K-sJAwmZ_Z6BRF3JH1UjgE-JgRyVdQN_qimiKkvip447l2cP7F9r3oXZUaLcIO5oDiCczchbg_MzaEFiVr8S6OxyW4RHj4UjCp_pZ_cs-cBRPBHVcYZlooaWaX1fb6zrLzF7z5UobCkMdPQWv40hHs3l86Mb05jq_ZlK405GWw9_ayxnruRcUapJW33g0Ej6E3wyOXEXhxQ";
+    const providedToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjUwMDZlMjc5MTVhMTcwYWIyNmIxZWUzYjgxZDExNjU0MmYxMjRmMjAiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUnlhbiBSb3RlbGxhIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0xuVkFENEMxUjdMMGNQM2JFVC14aVo4bUk0RWJ2aUZhQXFWazcxdUZQc01CMXJ6Zz1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9pdHAtaW1hLXJlcGxpY2F0ZS1wcm94eSIsImF1ZCI6Iml0cC1pbWEtcmVwbGljYXRlLXByb3h5IiwiYXV0aF90aW1lIjoxNzU4MDc3NTQ3LCJ1c2VyX2lkIjoiUjg0UTJZS09GM2E1NVZlTzJSaUpxeGpqYnNvMiIsInN1YiI6IlI4NFEyWUtPRjNhNTVWZU8yUmlKcXhqamJzbzIiLCJpYXQiOjE3NTgwODg3MzAsImV4cCI6MTc1ODA5MjMzMCwiZW1haWwiOiJybXI5NDk2QG55dS5lZHUiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExMzkzNTg5NTcyMDUwNTgxNDI2NiJdLCJlbWFpbCI6WyJybXI5NDk2QG55dS5lZHUiXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.Phs_zEj-LY4s0LoMRbYjByRUuS68wttC5VN9N0bwDZp7otTn-tHU2CU8TQhrQLf5yHTSiIsNYKPIw6g4I_P7M2Opv5vSLvE87C_7S8k-44OqSp5qr1iqjs7ZYLFCsbtvQyzy17M5skuqXs0z6su5YSJubb0tnZnJpXZl3oUnL2pQRUineTskogqk01_zvG_3yWMVLDPIjCVyf7AABG0hPN-AoFkIKu9aXK6lTWQsJndM9WG4XAhgyVisBM0U_5K_eK8Vc19HobEDlsrvb-X_KsagJJDK7d8emCSEiQ5anKBpegLVi4nitbDNMYGC99BBTBIZjcyuSWYMrKlwaA34dQ";
     
     if (providedToken) {
         window.transcribeApp.setAuthToken(providedToken);
