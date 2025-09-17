@@ -2008,6 +2008,11 @@ Keep it concise but insightful (2-3 sentences per section).`;
 
     updateTranscriptionOutput(text) {
         const output = document.getElementById('transcription-output');
+        if (!output) {
+            // Element was removed, skip transcription output
+            return;
+        }
+        
         const timestamp = new Date().toLocaleTimeString();
         
         const transcriptionDiv = document.createElement('div');
